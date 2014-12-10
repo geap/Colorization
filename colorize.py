@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-image_name = 'example.bmp'
 
-image = misc.imread(os.path.join(dir_path, image_name))
+original = misc.imread(os.path.join(dir_path, 'example.bmp'))
+marked = misc.imread(os.path.join(dir_path, 'example_marked.bmp'))
+
+original = original.astype(float)/255
+marked = marked.astype(float)/255
 
 """
 print 'image'
@@ -20,5 +23,7 @@ plt.imshow(image) #load
 plt.show()  # show the window
 """
 
-image_name_2 = 'example_copy.bmp'
-misc.imsave(os.path.join(dir_path, image_name_2), image)
+
+
+#image_name_2 = 'example_copy.bmp'
+#misc.imsave(os.path.join(dir_path, image_name_2), image)
