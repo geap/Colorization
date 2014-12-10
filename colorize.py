@@ -6,8 +6,6 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 image_name = 'example.bmp'
 
-# http://samarthbhargav.wordpress.com/2014/05/05/image-processing-with-python-rgb-to-grayscale-conversion/
-
 image = misc.imread(os.path.join(dir_path, image_name))
 
 """
