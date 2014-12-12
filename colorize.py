@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 import colorsys
 import math
 import os
+import sys
+
+os.system('cls')
+os.system('reset')
 
 def getColorExact( colorIm, YUV):
     # YUV as ntscIm
@@ -31,46 +35,45 @@ def getColorExact( colorIm, YUV):
     wd = 1
     
     # length as len (for obv reasons)
-    length = -1
+    length = 0
     col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
     row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
     vals = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    gvals = np.zeros((1,(2 * wd + 1 )**2))    
+    gvals = np.zeros((2 * wd + 1 )**2)
     
     
     # PREPS made, lets ITERATE!
     
-    consts_len = -1
+    consts_len = 0
     for j in range(m):
         for i in range(n):
             consts_len += 1
             
             if (not colorIm[i,j]):
-                tlen = -1
+                tlen = 0
                 
-                for ii in range(max( 0, i - wd ), min( i + wd, n ) +1):
-                    for jj in range( max( 0, j - wd ), min( j + wd, m ) +1):
+                for ii in range(max( 0, i - wd ), min( i + wd, n )):
+                    for jj in range( max( 0, j - wd ), min( j + wd, m )+1):
                         if ( ii != i or jj != j ):
-                            length += 1
-                            tlen += 1
                             row_inds[length,0] = consts_len
                             col_inds[length,0] = indices_matrix[ii,jj]
-                            gvals[0,tlen] = YUV[ii,jj,0]
-                
-                t_val = YUV[i,j,0]
-                gvals[0,tlen+1] = t_val
-                c_var = np.mean((gvals[0,0:tlen+1]-np.mean(gvals[0,0:tlen+1]))**2)
+                            gvals[tlen] = YUV[ii,jj,0]
+                            length += 1
+                            tlen += 1
+                            
+                t_val = YUV[i,j,0].copy()
+                gvals[tlen+1] = t_val
+                c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
                 csig = c_var * 0.6
-                mgv = min(( gvals[0,0:tlen] - t_val )**2)
-                
+                mgv = min(( gvals[0:tlen] - t_val )**2)
                 if (csig < ( -mgv / np.log(0.01 ))):
                     csig = -mgv / np.log(0.01)
                 if (csig <0.000002):
                     csig = 0.000002
                 
-                gvals[0,0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
-                gvals[0,0:tlen] = gvals[0,0:tlen] / np.sum(gvals[0,0:tlen])
-                vals[length-tlen:length,0] = -gvals[0,0:tlen]
+                gvals[0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
+                gvals[0:tlen] = gvals[0:tlen] / np.sum(gvals[0:tlen])
+                vals[length-tlen:length,0] = -gvals[0:tlen]
             
             # END IF
             
@@ -78,8 +81,13 @@ def getColorExact( colorIm, YUV):
             row_inds[length,0] = consts_len
             col_inds[length,0] = indices_matrix[i,j]
             vals[length,0] = 1
-        
+            
+            
+    
         # END OF FOR i
+        print vals
+        sys.exit("STOPPED FOR TESTING")
+        
     # END OF FOR j
     
     # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
@@ -111,10 +119,11 @@ max_d = np.floor(np.log(min(YUV.shape[0],YUV.shape[1]))/np.log(2)-2)
 
 iu = np.floor(YUV.shape[0]/(2**(max_d - 1))) * (2**(max_d - 1))
 ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
-
+colorIm = colorIm[:iu,:ju]
+YUV = YUV[:iu,:ju]
 
 # SOLVE THIS PROBLEM
-colorized = abs(getColorExact( colorIm[:iu,:ju], YUV[:iu,:ju] ));
+colorized = abs(getColorExact( colorIm, YUV ));
 
 
 #plt.imshow(colorized)
