@@ -2,6 +2,7 @@ from scipy import misc
 import numpy as np
 import matplotlib.pyplot as plt
 import colorsys
+import math
 import os
 
 def getColorExact( colorIm, YUV):
@@ -55,8 +56,33 @@ def getColorExact( colorIm, YUV):
                             row_inds[length,0] = consts_len
                             col_inds[length,0] = indices_matrix[ii,jj]
                             gvals[0,tlen] = YUV[ii,jj,0]
-                print gvals
-        break
+                
+                t_val = YUV[i,j,0]
+                gvals[0,tlen+1] = t_val
+                c_var = np.mean((gvals[0,0:tlen+1]-np.mean(gvals[0,0:tlen+1]))**2)
+                csig = c_var * 0.6
+                mgv = min(( gvals[0,0:tlen] - t_val )**2)
+                
+                if (csig < ( -mgv / np.log(0.01 ))):
+                    csig = -mgv / np.log(0.01)
+                if (csig <0.000002):
+                    csig = 0.000002
+                
+                gvals[0,0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
+                gvals[0,0:tlen] = gvals[0,0:tlen] / np.sum(gvals[0,0:tlen])
+                vals[length-tlen:length,0] = -gvals[0,0:tlen]
+            
+            # END IF
+            
+            length += 1
+            row_inds[length,0] = consts_len
+            col_inds[length,0] = indices_matrix[i,j]
+            vals[length,0] = 1
+        
+        # END OF FOR i
+    # END OF FOR j
+    
+    # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
     
     return YUV # should be colorized, but mock until we make it
 
