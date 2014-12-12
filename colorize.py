@@ -5,8 +5,38 @@ import colorsys
 import os
 
 def getColorExact( colorIm, YUV):
-    # THIS IS A MOCK F-N
-    return YUV
+    # YUV as ntscIm
+    
+    n = YUV.shape[0]
+    m = YUV.shape[1]
+    
+    image_size = n*m
+    
+    # colorized as nI
+    colorized = np.zeros(YUV.shape)
+    colorized[:,:,0] = YUV[:,:,0]
+    
+    
+    # this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
+    # indices_matrix as indsM
+    indices_matrix = np.arange(image_size).reshape(n,m,order='F')
+    # label_inds as lblInds
+    label_inds = np.nonzero(indices_matrix)
+    
+    wd = 1
+    
+    # length as len (for obv reasons)
+    length = 0
+    consts_len = 0
+    col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
+    row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
+    vals = np.zeros(image_size*( 2 * wd + 1 )**2,1)
+    gvals = np.zeros((1,2 * wd + 1 )**2);
+    
+    return YUV # should be colorized, but mock until we make it
+
+
+
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
