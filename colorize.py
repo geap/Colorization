@@ -88,12 +88,55 @@ def getColorExact( colorIm, YUV):
             
     
         # END OF FOR i
-        
     # END OF FOR j
-    print gvals
-    sys.exit('Testing')
+    
     
     # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
+    
+    vals = vals[0:length,0]
+    col_inds = col_inds[0:length,0]
+    row_inds = row_inds[0:length,0]
+    
+    # size(row_inds) => 600153
+    # size(col_inds) => 600153
+    # size(vals) => 600153
+    # consts_len => 81920
+    # imgSize => 81920
+    
+    # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
+    
+    '''THOUGHT FOOD
+    S = sparse(i,j,s,m,n,nzmax) uses vectors i, j, and s to generate an
+    m-by-n sparse matrix such that S(i(k),j(k)) = s(k), with space
+    allocated for nzmax nonzeros.  Vectors i, j, and s are all the same
+    length.  Any elements of s that are zero are ignored, along with the
+    corresponding values of i and j.  Any elements of s that have duplicate
+    values of i and j are added together.  The argument s and one of the
+    arguments i or j may be scalars, in which case the scalars are expanded
+    so that the first three arguments all have the same length.
+    
+    >> a = diag(1:4)
+    
+    a =
+    
+        1     0     0     0
+        0     2     0     0
+        0     0     3     0
+        0     0     0     4
+    
+    >> s = sparse(a)
+    
+    s =
+    
+    (1,1)        1
+    (2,2)        2
+    (3,3)        3
+    (4,4)        4
+   '''
+    
+    
+    #print something
+    sys.exit('Sparse needs to be implemented!')
     
     return YUV # should be colorized, but mock until we make it
 
