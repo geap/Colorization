@@ -25,26 +25,40 @@ def getColorExact( colorIm, YUV):
     # for the nonzero() work like in MATLAB
     color_copy_for_nonzero = colorIm.reshape(image_size).copy()
     # label_inds as lblInds
-    label_inds = np.nonzero(color_copy_for_nonzero)    
+    label_inds = np.nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
     
     wd = 1
     
     # length as len (for obv reasons)
-    length = 0
-    consts_len = 0
+    length = -1
     col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
     row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
     vals = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    gvals = np.zeros((1,(2 * wd + 1 )**2));
-    
+    gvals = np.zeros((1,(2 * wd + 1 )**2))    
     
     
     # PREPS made, lets ITERATE!
     
+    consts_len = -1
+    for j in range(m):
+        for i in range(n):
+            consts_len += 1
+            
+            if (not colorIm[i,j]):
+                tlen = -1
+                
+                for ii in range(max( 0, i - wd ), min( i + wd, n ) +1):
+                    for jj in range( max( 0, j - wd ), min( j + wd, m ) +1):
+                        if ( ii != i or jj != j ):
+                            length += 1
+                            tlen += 1
+                            row_inds[length,0] = consts_len
+                            col_inds[length,0] = indices_matrix[ii,jj]
+                            gvals[0,tlen] = YUV[ii,jj,0]
+                print gvals
+        break
     
     return YUV # should be colorized, but mock until we make it
-
-
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
