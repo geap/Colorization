@@ -2,8 +2,8 @@ from scipy import misc
 import numpy as np
 import matplotlib.pyplot as plt
 import colorsys
-import math
 import os
+import time
 import sys
 
 os.system('cls')
@@ -29,8 +29,9 @@ def getColorExact( colorIm, YUV):
     # We have to reshape and make a copy of the view of an array
     # for the nonzero() work like in MATLAB
     color_copy_for_nonzero = colorIm.reshape(image_size).copy()
+    
     # label_inds as lblInds
-    label_inds = np.nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
+    label_inds = np.count_nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
     
     wd = 1
     
@@ -43,7 +44,7 @@ def getColorExact( colorIm, YUV):
     
     
     # PREPS made, lets ITERATE!
-    
+    count = 0 # for testing
     consts_len = 0
     for j in range(m):
         for i in range(n):
@@ -52,17 +53,19 @@ def getColorExact( colorIm, YUV):
             if (not colorIm[i,j]):
                 tlen = 0
                 
-                for ii in range(max( 0, i - wd ), min( i + wd, n )):
+                #print max( 0, i - wd ), min( i + wd+1, n ),max( 0, j - wd ), min( j + wd, m )+1
+                for ii in range(max( 0, i-wd ), min( i+wd+1, n )):
                     for jj in range( max( 0, j - wd ), min( j + wd, m )+1):
+                        count += 1 # for testing
                         if ( ii != i or jj != j ):
                             row_inds[length,0] = consts_len
                             col_inds[length,0] = indices_matrix[ii,jj]
                             gvals[tlen] = YUV[ii,jj,0]
                             length += 1
                             tlen += 1
-                            
+                
                 t_val = YUV[i,j,0].copy()
-                gvals[tlen+1] = t_val
+                gvals[tlen] = t_val
                 c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
                 csig = c_var * 0.6
                 mgv = min(( gvals[0:tlen] - t_val )**2)
@@ -85,10 +88,10 @@ def getColorExact( colorIm, YUV):
             
     
         # END OF FOR i
-        print vals
-        sys.exit("STOPPED FOR TESTING")
         
     # END OF FOR j
+    print gvals
+    sys.exit('Testing')
     
     # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
     
