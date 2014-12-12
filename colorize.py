@@ -19,9 +19,13 @@ def getColorExact( colorIm, YUV):
     
     # this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
     # indices_matrix as indsM
-    indices_matrix = np.arange(image_size).reshape(n,m,order='F')
+    indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()
+    
+    # We have to reshape and make a copy of the view of an array
+    # for the nonzero() work like in MATLAB
+    color_copy_for_nonzero = colorIm.reshape(image_size).copy()
     # label_inds as lblInds
-    label_inds = np.nonzero(indices_matrix)
+    label_inds = np.nonzero(color_copy_for_nonzero)    
     
     wd = 1
     
@@ -30,8 +34,13 @@ def getColorExact( colorIm, YUV):
     consts_len = 0
     col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
     row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    vals = np.zeros(image_size*( 2 * wd + 1 )**2,1)
-    gvals = np.zeros((1,2 * wd + 1 )**2);
+    vals = np.zeros((image_size*( 2 * wd + 1 )**2,1))
+    gvals = np.zeros((1,(2 * wd + 1 )**2));
+    
+    
+    
+    # PREPS made, lets ITERATE!
+    
     
     return YUV # should be colorized, but mock until we make it
 
@@ -63,16 +72,12 @@ max_d = np.floor(np.log(min(YUV.shape[0],YUV.shape[1]))/np.log(2)-2)
 iu = np.floor(YUV.shape[0]/(2**(max_d - 1))) * (2**(max_d - 1))
 ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
 
-print colorIm.shape
-colorIm = colorIm[:iu,:ju]
-YUV = YUV[:iu,:ju]
-
 
 # SOLVE THIS PROBLEM
-colorized = abs(getColorExact( colorIm, YUV ));
+colorized = abs(getColorExact( colorIm[:iu,:ju], YUV[:iu,:ju] ));
 
 
-plt.imshow(colorized)
-plt.show()
+#plt.imshow(colorized)
+#plt.show()
 
 #misc.imsave(os.path.join(dir_path, 'example_colorized.bmp'), image)
