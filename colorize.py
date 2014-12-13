@@ -93,9 +93,13 @@ def getColorExact( colorIm, YUV):
     
     # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
     
-    vals = vals[0:length,0]
+    vals = vals[0:length,0]    
     col_inds = col_inds[0:length,0]
     row_inds = row_inds[0:length,0]
+    
+    print sum(vals)
+    print sum(col_inds)
+    print sum(row_inds)
     
     # size(row_inds) => 600153
     # size(col_inds) => 600153
@@ -161,12 +165,14 @@ YUV[:,:,0] = Y
 YUV[:,:,1] = I
 YUV[:,:,2] = Q
 
+'''
 max_d = np.floor(np.log(min(YUV.shape[0],YUV.shape[1]))/np.log(2)-2)
 
 iu = np.floor(YUV.shape[0]/(2**(max_d - 1))) * (2**(max_d - 1))
 ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
 colorIm = colorIm[:iu,:ju]
 YUV = YUV[:iu,:ju]
+'''
 
 # SOLVE THIS PROBLEM
 colorized = abs(getColorExact( colorIm, YUV ));
