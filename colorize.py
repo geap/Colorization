@@ -68,22 +68,23 @@ def getColorExact( colorIm, YUV):
                 gvals[tlen] = t_val
                 c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
                 csig = c_var * 0.6
-                mgv = min(( gvals[0:tlen] - t_val )**2)
+                mgv = min(( gvals[0:tlen+1] - t_val )**2)
+                
                 if (csig < ( -mgv / np.log(0.01 ))):
                     csig = -mgv / np.log(0.01)
                 if (csig <0.000002):
                     csig = 0.000002
                 
-                gvals[0:tlen+1] = np.exp( -(gvals[0:tlen+1] - t_val)**2 / csig )
-                gvals[0:tlen+1] = gvals[0:tlen+1] / np.sum(gvals[0:tlen+1])
-                vals[length-tlen:length+1,0] = -gvals[0:tlen+1]
+                gvals[0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
+                gvals[0:tlen] = gvals[0:tlen] / np.sum(gvals[0:tlen])
+                vals[length-tlen:length,0] = -gvals[0:tlen]
             
             # END IF
             
             length += 1
-            row_inds[length+1,0] = consts_len
-            col_inds[length+1,0] = indices_matrix[i,j]
-            vals[length+1,0] = 1
+            row_inds[length-1,0] = consts_len
+            col_inds[length-1,0] = indices_matrix[i,j]
+            vals[length-1,0] = 1
             
             
     
@@ -93,9 +94,9 @@ def getColorExact( colorIm, YUV):
     
     # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
     
-    vals = vals[0:length+1,0]    
-    col_inds = col_inds[0:length+1,0]
-    row_inds = row_inds[0:length+1,0]
+    vals = vals[0:length,0]
+    col_inds = col_inds[0:length,0]
+    row_inds = row_inds[0:length,0]
     
     # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
     

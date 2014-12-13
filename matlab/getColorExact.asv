@@ -58,6 +58,7 @@ for j=1:m
             
             gvals(1:tlen)=exp(-(gvals(1:tlen)-t_val).^2/csig);
             gvals(1:tlen)=gvals(1:tlen)/sum(gvals(1:tlen));
+            [len-tlen,
             vals(len-tlen+1:len)=-gvals(1:tlen);
             
         end
@@ -74,12 +75,6 @@ len
 vals=vals(1:len);
 col_inds=col_inds(1:len);
 row_inds=row_inds(1:len);
-
-size(row_inds)
-size(col_inds)
-size(vals)
-consts_len
-imgSize
 
 % size(row_inds) => 600153
 % size(col_inds) => 600153
