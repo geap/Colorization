@@ -55,7 +55,8 @@ for j=1:m
             if (csig<0.000002)
                 csig=0.000002;
             end
-
+            
+            len
             gvals(1:tlen)=exp(-(gvals(1:tlen)-t_val).^2/csig);
             gvals(1:tlen)=gvals(1:tlen)/sum(gvals(1:tlen));
             vals(len-tlen+1:len)=-gvals(1:tlen);
@@ -78,10 +79,9 @@ row_inds=row_inds(1:len);
 % size(vals) => 600153
 % consts_len => 81920
 % imgSize => 81920
-error('Proovi siit edasi mõelda, kuidas sparse ümber teha Pythonis')
+
 A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
 b=zeros(size(A,1),1);
-
 
 for t=2:3
     curIm=ntscIm(:,:,t);
