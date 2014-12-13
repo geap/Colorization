@@ -68,7 +68,8 @@ def getColorExact( colorIm, YUV):
                 gvals[tlen] = t_val
                 c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
                 csig = c_var * 0.6
-                mgv = min(( gvals[0:tlen] - t_val )**2)
+                mgv = min(( gvals[0:tlen+1] - t_val )**2)
+                
                 if (csig < ( -mgv / np.log(0.01 ))):
                     csig = -mgv / np.log(0.01)
                 if (csig <0.000002):
@@ -81,9 +82,9 @@ def getColorExact( colorIm, YUV):
             # END IF
             
             length += 1
-            row_inds[length,0] = consts_len
-            col_inds[length,0] = indices_matrix[i,j]
-            vals[length,0] = 1
+            row_inds[length-1,0] = consts_len
+            col_inds[length-1,0] = indices_matrix[i,j]
+            vals[length-1,0] = 1
             
             
     
@@ -96,12 +97,6 @@ def getColorExact( colorIm, YUV):
     vals = vals[0:length,0]
     col_inds = col_inds[0:length,0]
     row_inds = row_inds[0:length,0]
-    
-    # size(row_inds) => 600153
-    # size(col_inds) => 600153
-    # size(vals) => 600153
-    # consts_len => 81920
-    # imgSize => 81920
     
     # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
     
@@ -161,12 +156,13 @@ YUV[:,:,0] = Y
 YUV[:,:,1] = I
 YUV[:,:,2] = Q
 
+'''
 max_d = np.floor(np.log(min(YUV.shape[0],YUV.shape[1]))/np.log(2)-2)
-
 iu = np.floor(YUV.shape[0]/(2**(max_d - 1))) * (2**(max_d - 1))
 ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
 colorIm = colorIm[:iu,:ju]
 YUV = YUV[:iu,:ju]
+'''
 
 # SOLVE THIS PROBLEM
 colorized = abs(getColorExact( colorIm, YUV ));
