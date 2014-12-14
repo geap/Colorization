@@ -138,19 +138,22 @@ def getColorExact( colorIm, YUV):
     
     return YUV # should be colorized, but mock until we make it
 
-
+# read in grayscale and marked image
 dir_path = os.path.dirname(os.path.realpath(__file__))
-
 original = misc.imread(os.path.join(dir_path, 'example.bmp'))
 marked = misc.imread(os.path.join(dir_path, 'example_marked.bmp'))
 
 original = original.astype(float)/255
 marked = marked.astype(float)/255
 
-# values on True/False not 1/0 as in MATLAB - deal later with it!
-colorIm = abs(original - marked).sum(2) > 0.01
+# colorIm as isColored
+# calculate where colors are given
+isColored = abs(original - marked).sum(2) > 0.01
 
+# convert the image from RGB to YIQ
+# luma component does not change, so the original image can be used for calculations
 (Y,_,_) = colorsys.rgb_to_yiq(original[:,:,0],original[:,:,1],original[:,:,2])
+# calculate chromimance components
 (_,I,Q) = colorsys.rgb_to_yiq(marked[:,:,0],marked[:,:,1],marked[:,:,2])
 
 # YUV aka ntscIm
@@ -174,75 +177,83 @@ YUV = YUV[:iu,:ju]
 #def getColorExact( colorIm, YUV):
 # YUV as ntscIm
 
-n = YUV.shape[0]
-m = YUV.shape[1]
-
+n = YUV.shape[0] # image height
+m = YUV.shape[1] # image width
 image_size = n*m
 
 # colorized as nI
+# variable for the colorized result in YIQ
 colorized = np.zeros(YUV.shape)
 # luma component stays the same
 colorized[:,:,0] = YUV[:,:,0]
 
-
 # this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
 # indices_matrix as indsM
+# enumerate indices
 indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()
 
-# We have to reshape and make a copy of the view of an array
-# for the nonzero() work like in MATLAB
-color_copy_for_nonzero = colorIm.reshape(image_size).copy()
-
-# label_inds as lblInds
-#label_inds = np.count_nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
-# the indeces not the count of them is needed
-label_inds = np.nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
-
+# the radius of window around the pixel to assess
 wd = 1
+# the number of pixels in the window
+nr = (2*wd + 1)**2
+# maximal size of pixels to assess for the hole image
+max_nr = image_size * nr
 
-# length as len (for obv reasons)
-length = 0
-col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1), dtype=np.int64)
-row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1), dtype=np.int64)
-vals = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-gvals = np.zeros((2 * wd + 1 )**2)
-
+# set up variables for row indices, column indices, values and window values
+row_inds = np.zeros((max_nr, 1), dtype=np.int64)
+col_inds = np.zeros((max_nr, 1), dtype=np.int64)
+vals = np.zeros((max_nr, 1))
+# gvals as window_vals
+window_vals = np.zeros(nr)
 
 # PREPS made, lets ITERATE!
-count = 0 # for testing
+length = 0
 consts_len = 0
+# iterate over pixels in the image
 for j in range(m):
     for i in range(n):
         consts_len += 1
         
-        if (not colorIm[i,j]):
-            tlen = 0
+        if (not isColored[i,j]): # the pixel is not already colored
+            # tlen as window_index
+            window_index = 0
             
-            #print max( 0, i - wd ), min( i + wd+1, n ),max( 0, j - wd ), min( j + wd, m )+1
-            for ii in range(max( 0, i-wd ), min( i+wd+1, n )):
-                for jj in range( max( 0, j - wd ), min( j + wd, m )+1):
-                    count += 1 # for testing
-                    if ( ii != i or jj != j ):
+            # iterate over pixels in the window with the center [i,j]
+            for ii in range(max(0, i-wd), min(i+wd+1,n)): # min(i+wd,n) -> min( i+wd+1, n )
+                for jj in range(max(0, j-wd), min(j+wd, m) + 1): # but min(j+wd,m) -> min( j + wd, m )+1
+                    if (ii != i or jj != j): # not the center pixel
                         row_inds[length,0] = consts_len
                         col_inds[length,0] = indices_matrix[ii,jj]
-                        gvals[tlen] = YUV[ii,jj,0]
+                        window_vals[window_index] = YUV[ii,jj,0]
                         length += 1
-                        tlen += 1
+                        window_index += 1
             
-            t_val = YUV[i,j,0].copy()
-            gvals[tlen] = t_val
-            c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
-            csig = c_var * 0.6
-            mgv = min(( gvals[0:tlen+1] - t_val )**2)
+            # t_val as center
+            center = YUV[i,j,0].copy()
+            window_vals[window_index] = center
             
-            if (csig < ( -mgv / np.log(0.01 ))):
-                csig = -mgv / np.log(0.01)
-            if (csig <0.000002):
-                csig = 0.000002
+            # calculate variance of the intensities in a window around pixel [i,j]
+            # c_var as variance
+            variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2)
+            #csig as sigma
+            sigma = variance * 0.6 # don't really understand why this is necessary... based on article I would multiply with 2
             
-            gvals[0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
-            gvals[0:tlen] = gvals[0:tlen] / np.sum(gvals[0:tlen])
-            vals[length-tlen:length,0] = -gvals[0:tlen]
+            # magic
+            mgv = min(( window_vals[0:window_index+1] - center )**2)            
+            if (sigma < ( -mgv / np.log(0.01 ))):
+                sigma = -mgv / np.log(0.01)
+            # avoid dividing by 0
+            if (sigma < 0.000002):
+                sigma = 0.000002
+            
+            # use weighting funtion (2)
+            window_vals[0:window_index] = np.exp( -((window_vals[0:window_index] - center)**2) / sigma )
+            
+            # make the weights sum up to 1
+            window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index])
+            
+            # weights calculated
+            vals[length-window_index:length,0] = -window_vals[0:window_index]
         
         # END IF
         
@@ -326,13 +337,21 @@ A = A.tolil().tocsr()
 
 print 'Get the sparse matrix correct and then continue :)'
 
+# We have to reshape and make a copy of the view of an array
+# for the nonzero() work like in MATLAB
+color_copy_for_nonzero = isColored.reshape(image_size).copy()
+
+# label_inds as lblInds
+#label_inds = np.count_nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
+# the indeces not the count of them is needed
+label_inds = np.nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
 
 #b = np.zeros((A.shape[0], 1))
 #curIm = np.zeros(YUV.shape)
 for t in [1,2]: # not [2,3] due to different indexing 
     print t
     curIm = YUV[:,:,t]
-    curIm = curIm.reshape(image_size, 1)
+    curIm = curIm.reshape(image_size, 1) # because label_inds are up to 84800
     b = np.zeros((image_size, 1))
     b[label_inds] = curIm[label_inds]
     #new_vals = np.divide(A, b) # very, very slow
