@@ -189,40 +189,41 @@ colorized[:,:,0] = YUV[:,:,0]
 
 # this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
 # indices_matrix as indsM
-# enumerate indices
-indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()
+# enumerate indices by columns
+indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy() 
 
 # the radius of window around the pixel to assess
 wd = 1
 # the number of pixels in the window
 nr = (2*wd + 1)**2
-# maximal size of pixels to assess for the hole image
+# maximal size of pixels to assess for the hole image (for now include the full window also for the border pixels)
 max_nr = image_size * nr
 
-# set up variables for row indices, column indices, values and window values
+# set up variables for row indices, column indices, values
 row_inds = np.zeros((max_nr, 1), dtype=np.int64)
 col_inds = np.zeros((max_nr, 1), dtype=np.int64)
 vals = np.zeros((max_nr, 1))
 # gvals as window_vals
-window_vals = np.zeros(nr)
+# added this inside the loop
+# window_vals = np.zeros(nr) 
 
 # PREPS made, lets ITERATE!
 length = 0
-consts_len = 0
+pixel_nr = 0 # the nr of the current pixel, this corresponds to the row index in sparse matrix
 # iterate over pixels in the image
 for j in range(m):
     for i in range(n):
-        consts_len += 1
+        #pixel_nr += 1 # CHECK: commented out, because this way there won't be row index is sparse matrix with 0, added this to end 
         
         if (not isColored[i,j]): # the pixel is not already colored
             # tlen as window_index
             window_index = 0
-            
+            window_vals = np.zeros(nr)
             # iterate over pixels in the window with the center [i,j]
-            for ii in range(max(0, i-wd), min(i+wd+1,n)): # min(i+wd,n) -> min( i+wd+1, n )
-                for jj in range(max(0, j-wd), min(j+wd, m) + 1): # but min(j+wd,m) -> min( j + wd, m )+1
+            for ii in range(max(0, i-wd), min(i+wd+1,n)): # CHECK: min(i+wd,n) -> min( i+wd+1, n )
+                for jj in range(max(0, j-wd), min(j+wd, m) + 1): # CHECK: but min(j+wd,m) -> min( j + wd, m )+1
                     if (ii != i or jj != j): # not the center pixel
-                        row_inds[length,0] = consts_len
+                        row_inds[length,0] = pixel_nr
                         col_inds[length,0] = indices_matrix[ii,jj]
                         window_vals[window_index] = YUV[ii,jj,0]
                         length += 1
@@ -249,18 +250,20 @@ for j in range(m):
             # use weighting funtion (2)
             window_vals[0:window_index] = np.exp( -((window_vals[0:window_index] - center)**2) / sigma )
             
-            # make the weights sum up to 1
+            # make the weighting function sum up to 1
             window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index])
             
-            # weights calculated
+            # add the calculated weights
             vals[length-window_index:length,0] = -window_vals[0:window_index]
         
         # END IF
         
+        # add the values for the current pixel
+        row_inds[length,0] = pixel_nr
+        col_inds[length,0] = indices_matrix[i,j]
+        vals[length,0] = 1
         length += 1
-        row_inds[length-1,0] = consts_len
-        col_inds[length-1,0] = indices_matrix[i,j]
-        vals[length-1,0] = 1
+        pixel_nr += 1
         
         
 
@@ -270,6 +273,7 @@ for j in range(m):
 
 # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
 
+# trim to variables to the actually used length that does not include the full window for the border pixels
 vals = vals[0:length,0]
 col_inds = col_inds[0:length,0]
 row_inds = row_inds[0:length,0]
@@ -277,10 +281,6 @@ row_inds = row_inds[0:length,0]
 # decrease indexes by 1 because somehow sparse increases indexes by 1
 #col_inds[col_inds > 0] = col_inds[col_inds > 0] - 1
 #row_inds[row_inds > 0] = row_inds[row_inds > 0] - 1
-
-# otherwise index out of bounds
-if (row_inds[row_inds.shape[0]-1] == consts_len):
-    row_inds[row_inds.shape[0]-1] = consts_len - 1
 
 # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
     
@@ -318,7 +318,7 @@ s =
 # where data and ij satisfy the relationship a[ij[0, k], ij[1, k]] = data[k]
 
 # make the sparse matrix
-A = sps.coo_matrix((vals, (row_inds, col_inds)), (consts_len, image_size))
+A = sps.coo_matrix((vals, (row_inds, col_inds)), (pixel_nr, image_size))
 #A_dense = A.todense() # MemoryError
 # write to a file instead
 io.mmwrite(os.path.join(dir_path, 'sparse_matrix'), A)
