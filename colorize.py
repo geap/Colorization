@@ -12,133 +12,11 @@ from scipy import io
 os.system('cls')
 os.system('reset')
 
-def getColorExact( colorIm, YUV):
-    # YUV as ntscIm
-    
-    n = YUV.shape[0]
-    m = YUV.shape[1]
-    
-    image_size = n*m
-    
-    # colorized as nI
-    colorized = np.zeros(YUV.shape)
-    colorized[:,:,0] = YUV[:,:,0]
-    
-    
-    # this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
-    # indices_matrix as indsM
-    indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()
-    
-    # We have to reshape and make a copy of the view of an array
-    # for the nonzero() work like in MATLAB
-    color_copy_for_nonzero = colorIm.reshape(image_size).copy()
-    
-    # label_inds as lblInds
-    label_inds = np.count_nonzero(color_copy_for_nonzero) # it's cool that nonzero likes boolean values, too
-    
-    wd = 1
-    
-    # length as len (for obv reasons)
-    length = 0
-    col_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    row_inds = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    vals = np.zeros((image_size*( 2 * wd + 1 )**2,1))
-    gvals = np.zeros((2 * wd + 1 )**2)
-    
-    
-    # PREPS made, lets ITERATE!
-    count = 0 # for testing
-    consts_len = 0
-    for j in range(m):
-        for i in range(n):
-            consts_len += 1
-            
-            if (not colorIm[i,j]):
-                tlen = 0
-                
-                #print max( 0, i - wd ), min( i + wd+1, n ),max( 0, j - wd ), min( j + wd, m )+1
-                for ii in range(max( 0, i-wd ), min( i+wd+1, n )):
-                    for jj in range( max( 0, j - wd ), min( j + wd, m )+1):
-                        count += 1 # for testing
-                        if ( ii != i or jj != j ):
-                            row_inds[length,0] = consts_len
-                            col_inds[length,0] = indices_matrix[ii,jj]
-                            gvals[tlen] = YUV[ii,jj,0]
-                            length += 1
-                            tlen += 1
-                
-                t_val = YUV[i,j,0].copy()
-                gvals[tlen] = t_val
-                c_var = np.mean((gvals[0:tlen+1] - np.mean(gvals[0:tlen+1]))**2)
-                csig = c_var * 0.6
-                mgv = min(( gvals[0:tlen+1] - t_val )**2)
-                
-                if (csig < ( -mgv / np.log(0.01 ))):
-                    csig = -mgv / np.log(0.01)
-                if (csig <0.000002):
-                    csig = 0.000002
-                
-                gvals[0:tlen] = np.exp( -(gvals[0:tlen] - t_val)**2 / csig )
-                gvals[0:tlen] = gvals[0:tlen] / np.sum(gvals[0:tlen])
-                vals[length-tlen:length,0] = -gvals[0:tlen]
-            
-            # END IF
-            
-            length += 1
-            row_inds[length-1,0] = consts_len
-            col_inds[length-1,0] = indices_matrix[i,j]
-            vals[length-1,0] = 1
-            
-            
-    
-        # END OF FOR i
-    # END OF FOR j
-    
-    
-    # A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
-    
-    vals = vals[0:length,0]
-    col_inds = col_inds[0:length,0]
-    row_inds = row_inds[0:length,0]
-    
-    # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
-    
-    '''THOUGHT FOOD
-    S = sparse(i,j,s,m,n,nzmax) uses vectors i, j, and s to generate an
-    m-by-n sparse matrix such that S(i(k),j(k)) = s(k), with space
-    allocated for nzmax nonzeros.  Vectors i, j, and s are all the same
-    length.  Any elements of s that are zero are ignored, along with the
-    corresponding values of i and j.  Any elements of s that have duplicate
-    values of i and j are added together.  The argument s and one of the
-    arguments i or j may be scalars, in which case the scalars are expanded
-    so that the first three arguments all have the same length.
-    
-    >> a = diag(1:4)
-    
-    a =
-    
-        1     0     0     0
-        0     2     0     0
-        0     0     3     0
-        0     0     0     4
-    
-    >> s = sparse(a)
-    
-    s =
-    
-    (1,1)        1
-    (2,2)        2
-    (3,3)        3
-    (4,4)        4
-   '''
-    
-    
-    #print something
-    sys.exit('Sparse needs to be implemented!')
-    
-    return YUV # should be colorized, but mock until we make it
 
-# read in grayscale and marked image
+# ---------------------------------------------------------------------------- #
+# ------------------------------- PREPARE ------------------------------------ #
+# ---------------------------------------------------------------------------- #
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 original = misc.imread(os.path.join(dir_path, 'example.bmp'))
 marked = misc.imread(os.path.join(dir_path, 'example_marked.bmp'))
@@ -146,18 +24,12 @@ marked = misc.imread(os.path.join(dir_path, 'example_marked.bmp'))
 original = original.astype(float)/255
 marked = marked.astype(float)/255
 
-# colorIm as isColored
-# calculate where colors are given
-isColored = abs(original - marked).sum(2) > 0.01
+isColored = abs(original - marked).sum(2) > 0.01                                # isColored as colorIm 
 
-# convert the image from RGB to YIQ
-# luma component does not change, so the original image can be used for calculations
 (Y,_,_) = colorsys.rgb_to_yiq(original[:,:,0],original[:,:,1],original[:,:,2])
-# calculate chromimance components
 (_,I,Q) = colorsys.rgb_to_yiq(marked[:,:,0],marked[:,:,1],marked[:,:,2])
 
-# YUV aka ntscIm
-YUV = np.zeros(original.shape)
+YUV = np.zeros(original.shape)                                                  # YUV as ntscIm
 YUV[:,:,0] = Y
 YUV[:,:,1] = I
 YUV[:,:,2] = Q
@@ -169,81 +41,72 @@ ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
 colorIm = colorIm[:iu,:ju]
 YUV = YUV[:iu,:ju]
 '''
+                                                                                # ALTERNATIVE :: colorized = abs(getColorExact( colorIm, YUV ));
 
-# SOLVE THIS PROBLEM
-#colorized = abs(getColorExact( colorIm, YUV ));
+# ---------------------------------------------------------------------------- #
+# ---------------------------- getExactColor --------------------------------- #
+# ---------------------------------------------------------------------------- #
 
-############## getColorExact Start ################
-#def getColorExact( colorIm, YUV):
-# YUV as ntscIm
-
-n = YUV.shape[0] # image height
-m = YUV.shape[1] # image width
+                                                                                # YUV as ntscIm
+n = YUV.shape[0]                                                                # n = image height
+m = YUV.shape[1]                                                                # m = image width
 image_size = n*m
 
-# colorized as nI
-# variable for the colorized result in YIQ
-colorized = np.zeros(YUV.shape)
-# luma component stays the same
+
+colorized = np.zeros(YUV.shape)                                                 # colorized as nI = resultant colored image
 colorized[:,:,0] = YUV[:,:,0]
 
-# this Matlab code: z = reshape(x,3,4); should become z = x.reshape(3,4,order='F').copy() in Numpy.
-# indices_matrix as indsM
-# enumerate indices by columns
-indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy() 
 
-# the radius of window around the pixel to assess
-wd = 1
-# the number of pixels in the window
-nr = (2*wd + 1)**2
-# maximal size of pixels to assess for the hole image (for now include the full window also for the border pixels)
-max_nr = image_size * nr
+indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()            # indices_matrix as indsM
 
-# set up variables for row indices, column indices, values
+wd = 1                                                                          # The radius of window around the pixel to assess
+
+nr = (2*wd + 1)**2                                                              # The number of pixels in the window
+max_nr = image_size * nr                                                        # Maximal size of pixels to assess for the hole image
+                                                                                # (for now include the full window also for the border pixels)
+
 row_inds = np.zeros((max_nr, 1), dtype=np.int64)
 col_inds = np.zeros((max_nr, 1), dtype=np.int64)
 vals = np.zeros((max_nr, 1))
-# gvals as window_vals
-# added this inside the loop
-# window_vals = np.zeros(nr) 
+                                                                                # window_vals as gvals 
+                                                                                # added this inside the loop
+                                                                                # window_vals = np.zeros(nr) 
 
-# PREPS made, lets ITERATE!
+# ----------------------------- Interation ----------------------------------- #
+
 length = 0
-pixel_nr = 0 # the nr of the current pixel, this corresponds to the row index in sparse matrix
-# iterate over pixels in the image
-for j in range(m):
+pixel_nr = 0                                                                    # the nr of the current pixel, this corresponds to the row index in sparse matrix
+
+for j in range(m):                                                             # iterate over pixels in the image
     for i in range(n):
-        #pixel_nr += 1 # CHECK: commented out, because this way there won't be row index is sparse matrix with 0, added this to end 
+        #pixel_nr += 1  IS commented out, because this way there won't be row index is sparse matrix with 0, added this to end 
         
-        if (not isColored[i,j]): # the pixel is not already colored
-            # tlen as window_index
-            window_index = 0
+        if (not isColored[i,j]): # The pixel is not colored yet
+            
+            window_index = 0                                                    # tlen as window_index
             window_vals = np.zeros(nr)
-            # iterate over pixels in the window with the center [i,j]
-            for ii in range(max(0, i-wd), min(i+wd+1,n)): # CHECK: min(i+wd,n) -> min( i+wd+1, n )
-                for jj in range(max(0, j-wd), min(j+wd, m) + 1): # CHECK: but min(j+wd,m) -> min( j + wd, m )+1
-                    if (ii != i or jj != j): # not the center pixel
+                                                                                # iterate over pixels in the window with the center [i,j]
+            for ii in range(max(0, i-wd), min(i+wd+1,n)):                       # CHECK: min(i+wd,n) -> min( i+wd+1, n )
+                for jj in range(max(0, j-wd), min(j+wd, m) + 1):                # CHECK: but min(j+wd,m) -> min( j + wd, m )+1
+                    if (ii != i or jj != j):                                    # not the center pixel
                         row_inds[length,0] = pixel_nr
                         col_inds[length,0] = indices_matrix[ii,jj]
                         window_vals[window_index] = YUV[ii,jj,0]
                         length += 1
                         window_index += 1
             
-            # t_val as center
-            center = YUV[i,j,0].copy()
+            center = YUV[i,j,0].copy()                                          # t_val as center
             window_vals[window_index] = center
             
             # calculate variance of the intensities in a window around pixel [i,j]
             # c_var as variance
             variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2)
-            #csig as sigma
-            sigma = variance * 0.6 # don't really understand why this is necessary... based on article I would multiply with 2
             
-            # magic
+            sigma = variance * 0.6                                              #csig as sigma
+            
             mgv = min(( window_vals[0:window_index+1] - center )**2)            
             if (sigma < ( -mgv / np.log(0.01 ))):
-                sigma = -mgv / np.log(0.01)
-            # avoid dividing by 0
+                sigma = -mgv / np.log(0.01)                                     # avoid dividing by 0
             if (sigma < 0.000002):
                 sigma = 0.000002
             
@@ -253,7 +116,7 @@ for j in range(m):
             # make the weighting function sum up to 1
             window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index])
             
-            # add the calculated weights
+            # add calculated weights
             vals[length-window_index:length,0] = -window_vals[0:window_index]
         
         # END IF
@@ -265,55 +128,26 @@ for j in range(m):
         length += 1
         pixel_nr += 1
         
-        
-
     # END OF FOR i
 # END OF FOR j
 
-
-# A LITTLE BIT MORE AND THEN CAN RETURN ALREADY SOMETHING!
+# ------------------------ After Iteration Process --------------------------- #
+# ------------------------ After Iteration Process --------------------------- #
+# ------------------------ After Iteration Process --------------------------- #
 
 # trim to variables to the actually used length that does not include the full window for the border pixels
 vals = vals[0:length,0]
 col_inds = col_inds[0:length,0]
 row_inds = row_inds[0:length,0]
 
+
+# ------------------------------- Sparseness --------------------------------- #
+
 # decrease indexes by 1 because somehow sparse increases indexes by 1
 #col_inds[col_inds > 0] = col_inds[col_inds > 0] - 1
 #row_inds[row_inds > 0] = row_inds[row_inds > 0] - 1
 
 # A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
-    
-'''
-S = sparse(i,j,s,m,n,nzmax) uses vectors i, j, and s to generate an
-m-by-n sparse matrix such that S(i(k),j(k)) = s(k), with space
-allocated for nzmax nonzeros.  Vectors i, j, and s are all the same
-length.  Any elements of s that are zero are ignored, along with the
-corresponding values of i and j.  Any elements of s that have duplicate
-values of i and j are added together.  The argument s and one of the
-arguments i or j may be scalars, in which case the scalars are expanded
-so that the first three arguments all have the same length.
-
->> a = diag(1:4)
-
-a =
-
-    1     0     0     0
-    0     2     0     0
-    0     0     3     0
-    0     0     0     4
-
->> s = sparse(a)
-
-s =
-
-(1,1)        1
-(2,2)        2
-(3,3)        3
-(4,4)        4
-'''
-
-
 # csr_matrix((data, ij), [shape=(M, N)])
 # where data and ij satisfy the relationship a[ij[0, k], ij[1, k]] = data[k]
 
