@@ -66,8 +66,8 @@ image_size = n*m
 indices_matrix = np.arange(image_size).reshape(n,m,order='F').copy()            # indices_matrix as indsM
 
 wd = 1                                                                          # The radius of window around the pixel to assess
-nr = (2*wd + 1)**2                                                              # The number of pixels in the window
-max_nr = image_size * nr                                                        # Maximal size of pixels to assess for the hole image
+nr_of_px_in_wd = (2*wd + 1)**2                                                  # The number of pixels in the window around one pixel
+max_nr = image_size * nr_of_px_in_wd                                            # Maximal size of pixels to assess for the hole image
                                                                                 # (for now include the full window also for the border pixels)
 row_inds = np.zeros((max_nr, 1), dtype=np.int64)
 col_inds = np.zeros((max_nr, 1), dtype=np.int64)
@@ -75,19 +75,24 @@ vals = np.zeros((max_nr, 1))
 
 # ----------------------------- Interation ----------------------------------- #
 
-length = 0
-pixel_nr = 0                                                                    # the nr of the current pixel, this corresponds to the row index in sparse matrix
-
-for j in range(m):                                                             # iterate over pixels in the image
+length = 0                                                                      # length as len
+pixel_nr = 0                                                                    # pixel_nr as consts_len
+                                                                                # Nr of the current pixel == row index in sparse matrix
+# iterate over pixels in the image
+for j in range(m):
     for i in range(n):
         
-        if (not isColored[i,j]):                                               # The pixel is not colored yet            
-            window_index = 0                                                    # tlen as window_index
-            window_vals = np.zeros(nr)                                          # window_vals as gvals 
-                                                                                # iterate over pixels in the window with the center [i,j]
+        # If current pixel is not colored
+        if (not isColored[i,j]):
+            window_index = 0                                                    # window_index as tlen
+            window_vals = np.zeros(nr_of_px_in_wd)                              # window_vals as gvals 
+            
+            # Then iterate over pixels in the window around [i,j]
             for ii in range(max(0, i-wd), min(i+wd+1,n)):
                 for jj in range(max(0, j-wd), min(j+wd+1, m)):
-                    if (ii != i or jj != j):                                    # not the center pixel
+                    
+                    # Only if current pixel is not [i,j]
+                    if (ii != i or jj != j):
                         row_inds[length,0] = pixel_nr
                         col_inds[length,0] = indices_matrix[ii,jj]
                         window_vals[window_index] = YUV[ii,jj,0]
@@ -96,11 +101,11 @@ for j in range(m):                                                             #
             
             center = YUV[i,j,0].copy()                                          # t_val as center
             window_vals[window_index] = center
-            
                                                                                 # calculate variance of the intensities in a window around pixel [i,j]
-            variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2) # # c_var as variance            
+            variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2) # c_var as variance            
             sigma = variance * 0.6                                              #csig as sigma
             
+            # Indeed, magic
             mgv = min(( window_vals[0:window_index+1] - center )**2)            
             if (sigma < ( -mgv / np.log(0.01 ))):
                 sigma = -mgv / np.log(0.01)                                     
@@ -111,9 +116,9 @@ for j in range(m):                                                             #
             window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index]) # make the weighting function sum up to 1
             vals[length-window_index:length,0] = -window_vals[0:window_index]
         
-        # END IF
+        # END IF NOT COLORED
         
-                                                                                # add the values for the current pixel
+        # Add the values for the current pixel
         row_inds[length,0] = pixel_nr
         col_inds[length,0] = indices_matrix[i,j]
         vals[length,0] = 1
@@ -123,12 +128,6 @@ for j in range(m):                                                             #
     # END OF FOR i
 # END OF FOR j
 
-
-print row_inds.shape
-print col_inds.shape
-print vals.shape
-print window_vals
-sys.exit('ERROR')
 
 
 # ---------------------------------------------------------------------------- #
@@ -170,4 +169,4 @@ colorizedRGB[:,:,2] = B
 plt.imshow(colorizedRGB)
 plt.show()
 
-misc.imsave(os.path.join(dir_path, 'example_colorized.bmp'), colorizedRGB)
+#misc.imsave(os.path.join(dir_path, 'example_colorized.bmp'), colorizedRGB)

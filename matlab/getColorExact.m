@@ -75,20 +75,6 @@ vals=vals(1:len);
 col_inds=col_inds(1:len);
 row_inds=row_inds(1:len);
 
-row_inds(1:10)
-row_inds(end-10:end)
-col_inds(1:10)
-col_inds(end-10:end)
-vals(1:10)
-vals(end-10:end)
-error('ERROR')
-
-% size(row_inds) => 600153
-% size(col_inds) => 600153
-% size(vals) => 600153
-% consts_len => 81920
-% imgSize => 81920
-
 A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
 b=zeros(size(A,1),1);
 
