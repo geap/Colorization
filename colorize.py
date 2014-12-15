@@ -29,8 +29,8 @@ def yiq_to_rgb(y, i, q):                                                        
 # ---------------------------------------------------------------------------- #
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-original = misc.imread(os.path.join(dir_path, 'example4_small_original.jpg'))
-marked = misc.imread(os.path.join(dir_path, 'example4_small_marked.jpg'))
+original = misc.imread(os.path.join(dir_path, 'example2.bmp'))
+marked = misc.imread(os.path.join(dir_path, 'example2_marked.bmp'))
 
 original = original.astype(float)/255
 marked = marked.astype(float)/255
@@ -49,8 +49,8 @@ YUV[:,:,2] = Q
 max_d = np.floor(np.log(min(YUV.shape[0],YUV.shape[1]))/np.log(2)-2)
 iu = np.floor(YUV.shape[0]/(2**(max_d - 1))) * (2**(max_d - 1))
 ju = np.floor(YUV.shape[1]/(2**(max_d - 1))) * (2**(max_d - 1))
-colorIm = colorIm[:iu,:ju]
-YUV = YUV[:iu,:ju]
+isColored = isColored[:iu,:ju].copy()
+YUV = YUV[:iu,:ju].copy()
 '''
                                                                                 # ALTERNATIVE :: colorized = abs(getColorExact( colorIm, YUV ));
 
@@ -168,12 +168,12 @@ for t in [1,2]:
 # ---------------------------------------------------------------------------- #
 
 (R, G, B) = yiq_to_rgb(colorized[:,:,0],colorized[:,:,1],colorized[:,:,2])
-colorizedRGB = np.zeros(original.shape)
+colorizedRGB = np.zeros(colorized.shape)
 colorizedRGB[:,:,0] = R                                                         # colorizedRGB as colorizedIm
 colorizedRGB[:,:,1] = G
 colorizedRGB[:,:,2] = B
 
-plt.imshow(colorizedRGB)
-plt.show()
+#plt.imshow(colorizedRGB)
+#plt.show()
 
-#misc.imsave(os.path.join(dir_path, 'example_colorized.bmp'), colorizedRGB)
+misc.imsave(os.path.join(dir_path, 'example2_colorized.pdf'), colorizedRGB, format='pdf')

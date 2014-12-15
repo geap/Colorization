@@ -43,7 +43,7 @@ for j=1:m
             t_val=ntscIm(i,j,1);
             gvals(tlen+1)=t_val;
             c_var=mean((gvals(1:tlen+1)-mean(gvals(1:tlen+1))).^2);
-            csig=c_var*0.6;
+            csig=c_var*20;
 
             mgv=min((gvals(1:tlen)-t_val).^2);
         
