@@ -69,9 +69,9 @@ wd = 1                                                                          
 nr_of_px_in_wd = (2*wd + 1)**2                                                  # The number of pixels in the window around one pixel
 max_nr = image_size * nr_of_px_in_wd                                            # Maximal size of pixels to assess for the hole image
                                                                                 # (for now include the full window also for the border pixels)
-row_inds = np.zeros((max_nr, 1), dtype=np.int64)
-col_inds = np.zeros((max_nr, 1), dtype=np.int64)
-vals = np.zeros((max_nr, 1))
+row_inds = np.zeros(max_nr, dtype=np.int64)
+col_inds = np.zeros(max_nr, dtype=np.int64)
+vals = np.zeros(max_nr)
 
 # ----------------------------- Interation ----------------------------------- #
 
@@ -93,8 +93,8 @@ for j in range(m):
                     
                     # Only if current pixel is not [i,j]
                     if (ii != i or jj != j):
-                        row_inds[length,0] = pixel_nr
-                        col_inds[length,0] = indices_matrix[ii,jj]
+                        row_inds[length] = pixel_nr
+                        col_inds[length] = indices_matrix[ii,jj]
                         window_vals[window_index] = YUV[ii,jj,0]
                         length += 1
                         window_index += 1
@@ -102,7 +102,7 @@ for j in range(m):
             center = YUV[i,j,0].copy()                                          # t_val as center
             window_vals[window_index] = center
                                                                                 # calculate variance of the intensities in a window around pixel [i,j]
-            variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2) # c_var as variance            
+            variance = np.mean((window_vals[0:window_index+1] - np.mean(window_vals[0:window_index+1]))**2) # variance as c_var
             sigma = variance * 0.6                                              #csig as sigma
             
             # Indeed, magic
@@ -114,14 +114,21 @@ for j in range(m):
             
             window_vals[0:window_index] = np.exp( -((window_vals[0:window_index] - center)**2) / sigma )    # use weighting funtion (2)
             window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index]) # make the weighting function sum up to 1
-            vals[length-window_index:length,0] = -window_vals[0:window_index]
+            vals[length-window_index:length] = -window_vals[0:window_index]
         
         # END IF NOT COLORED
         
         # Add the values for the current pixel
-        row_inds[length,0] = pixel_nr
-        col_inds[length,0] = indices_matrix[i,j]
-        vals[length,0] = 1
+        row_inds[length] = pixel_nr
+        
+        '''
+        Self commantary:
+        indices_matrix has linear indices of the original image matrix
+        i.e. be aware when col_inds are used for original image
+        as this does not work in Python!!!
+        '''
+        col_inds[length] = indices_matrix[i,j]
+        vals[length] = 1
         length += 1
         pixel_nr += 1
         
@@ -133,15 +140,17 @@ for j in range(m):
 # ---------------------------------------------------------------------------- #
 # ------------------------ After Iteration Process --------------------------- #
 # ---------------------------------------------------------------------------- #
-                                                                                # trim to variables to the actually used length that does not include the full window for the border pixels
-vals = vals[0:length,0]
-col_inds = col_inds[0:length,0]
-row_inds = row_inds[0:length,0]
+
+# Trim to variables to the length that does not include overflow from the edges
+vals = vals[0:length]
+col_inds = col_inds[0:length]
+row_inds = row_inds[0:length]
 
 # ------------------------------- Sparseness --------------------------------- #
-
+# sys.exit('LETS NOT SPARSE IT YET')
 A = sparse.csr_matrix((vals, (row_inds, col_inds)), (pixel_nr, image_size))
-io.mmwrite(os.path.join(dir_path, 'sparse_matrix'), A)
+# io.mmwrite(os.path.join(dir_path, 'sparse_matrix'), A)
+b = np.zeros((A.shape[0]))
 
 colorized = np.zeros(YUV.shape)                                                 # colorized as nI = resultant colored image
 colorized[:,:,0] = YUV[:,:,0]
@@ -149,12 +158,12 @@ colorized[:,:,0] = YUV[:,:,0]
 color_copy_for_nonzero = isColored.reshape(image_size).copy()                   # We have to reshape and make a copy of the view of an array for the nonzero() to work like in MATLAB
 colored_inds = np.nonzero(color_copy_for_nonzero)                               # colored_inds as lblInds
 
-b = np.zeros((A.shape[0], 1))
 for t in [1,2]:
-    curIm = YUV[:,:,t].reshape(A.shape[0], 1)
+    curIm = YUV[:,:,t].reshape(image_size).copy()
     b[colored_inds] = curIm[colored_inds]
-    new_vals = linalg.spsolve(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), slightly different solutions
-    colorized[:,:,t] = new_vals.reshape(n, m, order='F').copy()
+    new_vals = linalg.lsqr(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), slightly different solutions
+    print new_vals[0].shape
+    colorized[:,:,t] = new_vals[0].reshape(n, m, order='F')
     
 # ---------------------------------------------------------------------------- #
 # ------------------------------- CONCLUDE ----------------------------------- #
