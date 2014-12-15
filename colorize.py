@@ -29,8 +29,8 @@ def yiq_to_rgb(y, i, q):                                                        
 # ---------------------------------------------------------------------------- #
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-original = misc.imread(os.path.join(dir_path, 'example.bmp'))
-marked = misc.imread(os.path.join(dir_path, 'example3.bmp'))
+original = misc.imread(os.path.join(dir_path, 'example4_original.jpg'))
+marked = misc.imread(os.path.join(dir_path, 'example4_marked.jpg'))
 
 original = original.astype(float)/255
 marked = marked.astype(float)/255
