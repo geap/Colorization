@@ -20,7 +20,6 @@ row_inds=zeros(imgSize*(2*wd+1)^2,1);
 vals=zeros(imgSize*(2*wd+1)^2,1);
 gvals=zeros(1,(2*wd+1)^2);
 
-count = 0;
 for j=1:m
 	for i=1:n
         consts_len=consts_len+1;
@@ -32,7 +31,7 @@ for j=1:m
             
             for ii=max(1,i-wd):min(i+wd,n)
                 for jj=max(1,j-wd):min(j+wd,m)
-                    count = count +1;
+                    
                     if (ii~=i)||(jj~=j)
                         len=len+1; tlen=tlen+1;
                         row_inds(len)= consts_len;
@@ -59,17 +58,16 @@ for j=1:m
             gvals(1:tlen)=exp(-(gvals(1:tlen)-t_val).^2/csig);
             gvals(1:tlen)=gvals(1:tlen)/sum(gvals(1:tlen));
             vals(len-tlen+1:len)=-gvals(1:tlen);
-            
+                        
         end
 
         len=len+1;
         row_inds(len)= consts_len;
         col_inds(len)=indsM(i,j);
-        vals(len)=1; 
-
-	end
+        vals(len)=1;
+        
+    end
 end
-
 
 vals=vals(1:len);
 col_inds=col_inds(1:len);
@@ -85,7 +83,7 @@ for t=2:3
     nI(:,:,t)=reshape(new_vals,n,m,1);    
 end
 
-
+figure, image(nI)
 
 snI=nI;
 nI=my_ntsc2rgb(nI);

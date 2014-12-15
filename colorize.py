@@ -78,6 +78,7 @@ vals = np.zeros(max_nr)
 length = 0                                                                      # length as len
 pixel_nr = 0                                                                    # pixel_nr as consts_len
                                                                                 # Nr of the current pixel == row index in sparse matrix
+
 # iterate over pixels in the image
 for j in range(m):
     for i in range(n):
@@ -115,18 +116,13 @@ for j in range(m):
             window_vals[0:window_index] = np.exp( -((window_vals[0:window_index] - center)**2) / sigma )    # use weighting funtion (2)
             window_vals[0:window_index] = window_vals[0:window_index] / np.sum(window_vals[0:window_index]) # make the weighting function sum up to 1
             vals[length-window_index:length] = -window_vals[0:window_index]
+            
         
         # END IF NOT COLORED
         
         # Add the values for the current pixel
         row_inds[length] = pixel_nr
         
-        '''
-        Self commantary:
-        indices_matrix has linear indices of the original image matrix
-        i.e. be aware when col_inds are used for original image
-        as this does not work in Python!!!
-        '''
         col_inds[length] = indices_matrix[i,j]
         vals[length] = 1
         length += 1
@@ -161,13 +157,18 @@ colored_inds = np.nonzero(color_copy_for_nonzero)                               
 for t in [1,2]:
     curIm = YUV[:,:,t].reshape(image_size).copy()
     b[colored_inds] = curIm[colored_inds]
-    new_vals = linalg.lsqr(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), slightly different solutions
-    print new_vals[0].shape
-    colorized[:,:,t] = new_vals[0].reshape(n, m, order='F')
+    new_vals = linalg.spsolve(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), slightly different solutions
+    print new_vals
+    #print new_vals[0].shape
+    colorized[:,:,t] = new_vals.reshape(n, m, order='F')
     
 # ---------------------------------------------------------------------------- #
 # ------------------------------- CONCLUDE ----------------------------------- #
 # ---------------------------------------------------------------------------- #
+
+plt.imshow(colorized)
+plt.show()
+sys.exit('plotting')
 
 (R, G, B) = yiq_to_rgb(colorized[:,:,0],colorized[:,:,1],colorized[:,:,2])
 colorizedRGB = np.zeros(original.shape)
