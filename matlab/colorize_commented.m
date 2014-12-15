@@ -1,8 +1,8 @@
 clear all
 clc
 
-original = double(imread('example.bmp'))/255;
-marked   = double(imread('example_marked.bmp'))/255;
+original = double(imread('example2.bmp'))/255;
+marked   = double(imread('example2_marked.bmp'))/255;
 out_name='example_res_geaga.bmp';
 
 % sum(X,dim) sums along the dimesions dim, i.e. sum(..,3) for image
@@ -28,15 +28,15 @@ ntscIm(:,:,3)=scI(:,:,3);
 % Takes log from the min of the first two dimension sizes of the new image
 % divides it by the log(2), substracts 2 and takes floor
 % then names it "max dimension" :D
-% max_d=floor(log(min(size(ntscIm,1),size(ntscIm,2)))/log(2)-2);
-% 
-% % does some magic
-% iu=floor(size(ntscIm,1)/(2^(max_d-1)))*(2^(max_d-1));
-% ju=floor(size(ntscIm,2)/(2^(max_d-1)))*(2^(max_d-1));
-% id=1; jd=1;
-% % specifies colorIm pixels that are painted I guess
-% colorIm=colorIm(id:iu,jd:ju,:);
-% ntscIm=ntscIm(id:iu,jd:ju,:);
+max_d=floor(log(min(size(ntscIm,1),size(ntscIm,2)))/log(2)-2);
+
+% does some magic
+iu=floor(size(ntscIm,1)/(2^(max_d-1)))*(2^(max_d-1));
+ju=floor(size(ntscIm,2)/(2^(max_d-1)))*(2^(max_d-1));
+id=1; jd=1;
+% specifies colorIm pixels that are painted I guess
+colorIm=colorIm(id:iu,jd:ju,:);
+ntscIm=ntscIm(id:iu,jd:ju,:);
 
 
 % solver 1 ie matlab itself by default

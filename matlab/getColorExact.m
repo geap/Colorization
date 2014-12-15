@@ -11,7 +11,7 @@ nI(:,:,1)=ntscIm(:,:,1);
 indsM=reshape([1:imgSize],n,m);
 lblInds=find(colorIm);
 
-wd=1; 
+wd=1;
 
 len=0;
 consts_len=0;
@@ -84,8 +84,6 @@ for t=2:3
     nI(:,:,t)=reshape(new_vals,n,m,1);    
 end
 
-figure, image(abs(nI))
-error('t')
 snI=nI;
 nI=my_ntsc2rgb(nI);
 
