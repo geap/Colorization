@@ -13,7 +13,8 @@ Use your favorite image editing program
 the disk. 
 
 1) The original B/W image. The image needs to be saved in an RGB (3 channels) format.
-2) The B/W with colors scribbled in the desired places. Use your favorite paint program (Photoshop, paint, gimp and each) to generate the scribbles. Make sure no compression is used and the only pixels in which the RGB value of the scribbled image are different then the original image are the colored pixels. 
+2) The B/W with colors scribbled in the desired places. Use your favorite paint program (Photoshop, paint, gimp and each) to generate the scribbles. Make sure no compression is used and the only pixels in which the RGB value of the scribbled image are different then the original image are the colored pixels.
+NB! For scribbling use exact tools such as Pencil in Photoshop
 
 ============
 ORIGINAL ARTICLE READ ME
