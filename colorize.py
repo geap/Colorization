@@ -145,30 +145,27 @@ row_inds = row_inds[0:length]
 # ------------------------------- Sparseness --------------------------------- #
 # sys.exit('LETS NOT SPARSE IT YET')
 A = sparse.csr_matrix((vals, (row_inds, col_inds)), (pixel_nr, image_size))
+
 # io.mmwrite(os.path.join(dir_path, 'sparse_matrix'), A)
 b = np.zeros((A.shape[0]))
 
 colorized = np.zeros(YUV.shape)                                                 # colorized as nI = resultant colored image
 colorized[:,:,0] = YUV[:,:,0]
 
-color_copy_for_nonzero = isColored.reshape(image_size).copy()                   # We have to reshape and make a copy of the view of an array for the nonzero() to work like in MATLAB
+color_copy_for_nonzero = isColored.reshape(image_size,order='F').copy()                   # We have to reshape and make a copy of the view of an array for the nonzero() to work like in MATLAB
 colored_inds = np.nonzero(color_copy_for_nonzero)                               # colored_inds as lblInds
 
 for t in [1,2]:
-    curIm = YUV[:,:,t].reshape(image_size).copy()
+    curIm = YUV[:,:,t].reshape(image_size,order='F').copy()
     b[colored_inds] = curIm[colored_inds]
     new_vals = linalg.spsolve(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), slightly different solutions
-    print new_vals
-    #print new_vals[0].shape
+    # lsqr returns unexpectedly (ndarray,ndarray) tuple, first is correct so:
+    # use new_vals[0] for reshape if you use lsqr
     colorized[:,:,t] = new_vals.reshape(n, m, order='F')
     
 # ---------------------------------------------------------------------------- #
 # ------------------------------- CONCLUDE ----------------------------------- #
 # ---------------------------------------------------------------------------- #
-
-plt.imshow(colorized)
-plt.show()
-sys.exit('plotting')
 
 (R, G, B) = yiq_to_rgb(colorized[:,:,0],colorized[:,:,1],colorized[:,:,2])
 colorizedRGB = np.zeros(original.shape)

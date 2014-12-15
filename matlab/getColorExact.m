@@ -74,17 +74,18 @@ col_inds=col_inds(1:len);
 row_inds=row_inds(1:len);
 
 A=sparse(row_inds,col_inds,vals,consts_len,imgSize);
+
 b=zeros(size(A,1),1);
 
 for t=2:3
     curIm=ntscIm(:,:,t);
     b(lblInds)=curIm(lblInds);
-    new_vals=A\b;   
+    new_vals=A\b;
     nI(:,:,t)=reshape(new_vals,n,m,1);    
 end
 
-figure, image(nI)
-
+figure, image(abs(nI))
+error('t')
 snI=nI;
 nI=my_ntsc2rgb(nI);
 
