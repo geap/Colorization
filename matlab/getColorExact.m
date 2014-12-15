@@ -67,19 +67,21 @@ for j=1:m
         col_inds(len)=indsM(i,j);
         vals(len)=1; 
 
-    end
+	end
 end
 
-len
+
 vals=vals(1:len);
 col_inds=col_inds(1:len);
 row_inds=row_inds(1:len);
 
-size(row_inds)
-size(col_inds)
-size(vals)
-consts_len
-imgSize
+row_inds(1:10)
+row_inds(end-10:end)
+col_inds(1:10)
+col_inds(end-10:end)
+vals(1:10)
+vals(end-10:end)
+error('ERROR')
 
 % size(row_inds) => 600153
 % size(col_inds) => 600153

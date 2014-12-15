@@ -131,6 +131,12 @@ for j in range(m):                                                             #
     # END OF FOR i
 # END OF FOR j
 
+print row_inds.shape
+print col_inds.shape
+print vals.shape
+print window_vals
+sys.exit('ERROR')
+
 # ------------------------ After Iteration Process --------------------------- #
 # ------------------------ After Iteration Process --------------------------- #
 # ------------------------ After Iteration Process --------------------------- #
