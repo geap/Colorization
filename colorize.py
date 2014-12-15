@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import misc
-from scipy import sparse
 from scipy import io
+from scipy import sparse
+from scipy.sparse import linalg
 import colorsys
 import os
 import time
@@ -145,7 +146,7 @@ b = np.zeros((A.shape[0], 1))
 for t in [1,2]:
     curIm = YUV[:,:,t].reshape(A.shape[0], 1)
     b[colored_inds] = curIm[colored_inds]
-    new_vals = sparse.linalg.spsolve(A, b)
+    new_vals = linalg.spsolve(A, b)                                             # new_vals = linalg.lsqr(A, b)[0] # least-squares solution (much slower), different solutions
     colorized[:,:,t] = new_vals.reshape(n, m, order='F').copy()
     
 # ---------------------------------------------------------------------------- #
