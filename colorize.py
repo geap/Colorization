@@ -28,9 +28,12 @@ def yiq_to_rgb(y, i, q):                                                        
 # ------------------------------- PREPARE ------------------------------------ #
 # ---------------------------------------------------------------------------- #
 
+o_img = input('Enter original file name (using single quotes): ')
+m_img = input('Enter marked file name (using single quotes): ')
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
-original = misc.imread(os.path.join(dir_path, 'example2.bmp'))
-marked = misc.imread(os.path.join(dir_path, 'example2_marked.bmp'))
+original = misc.imread(os.path.join(dir_path, o_img))
+marked = misc.imread(os.path.join(dir_path, m_img))
 
 original = original.astype(float)/255
 marked = marked.astype(float)/255
@@ -173,7 +176,7 @@ colorizedRGB[:,:,0] = R                                                         
 colorizedRGB[:,:,1] = G
 colorizedRGB[:,:,2] = B
 
-#plt.imshow(colorizedRGB)
-#plt.show()
+plt.imshow(colorizedRGB)
+plt.show()
 
-misc.imsave(os.path.join(dir_path, 'example2_colorized.pdf'), colorizedRGB, format='pdf')
+misc.imsave(os.path.join(dir_path, 'example3_colorized.bmp'), colorizedRGB, format='bmp')
